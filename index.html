@@ -619,7 +619,6 @@
         async function initFirebase() {
             if (!firebaseConfig) {
                 console.error("Firebase config is missing.");
-                showMessage("Setup Error", "Firebase configuration is not available. Persistence will not work.");
                 return;
             }
 
@@ -642,7 +641,6 @@
                 listenForLastPlan();
             } catch (error) {
                 console.error("Firebase/Auth initialization failed:", error);
-                showMessage("Authentication Error", `Could not connect to the system. Error: ${error.message}`);
             }
         }
 
