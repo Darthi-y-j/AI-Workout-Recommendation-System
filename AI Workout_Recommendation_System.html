@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness & Goal Predictor | Professional Edition</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* --- Professional Light Mode and Theming (White Theme) --- */
+        :root {
+            --surface: #ffffff;
+            --accent: #0f766e;
+            --accent-soft: #22d3ee;
+            --slate-ink: #0f172a;
+            --muted-slate: #64748b;
+            --bg-start: #eef5ff;
+            --bg-end: #fef9f5;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.08), transparent 35%),
+                radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.06), transparent 45%),
+                linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            color: var(--slate-ink);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+            background-size: 140px 140px;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .card {
+            background-color: #ffffff;
+            /* Pure white card color */
+            border-radius: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            /* Soft, light shadow */
+            border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(15, 118, 110, 0.06);
+            pointer-events: none;
+        }
+
+        .gradient-bg {
+            /* Professional Deep Teal/Aqua Gradient - used for CTA */
+            background: linear-gradient(135deg, #164e63 0%, #0f766e 100%);
+        }
+
+        .input-field {
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid #cbd5e1;
+            /* Light gray border */
+            background-color: #ffffff;
+            color: #1e293b;
+            /* Dark text */
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #22d3ee;
+            /* Aqua Accent */
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.3);
+            outline: none;
+        }
+
+        /* --- Custom Pill Selector for Equipment --- */
+        .equipment-label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            /* Pill shape */
+            border: 2px solid #cbd5e1;
+            /* Light gray border */
+            background-color: #f1f5f9;
+            /* Subtle gray background */
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+            user-select: none;
+            color: #475569;
+            /* Dark text */
+        }
+
+        .equipment-input:checked+.equipment-label {
+            border-color: #22d3ee;
+            /* Aqua Accent */
+            background-color: #22d3ee;
+            color: #ffffff;
+            /* White text on bright background */
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+        }
+
+        /* --- Utilities --- */
+        .loader {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #0f766e;
+            /* Teal Loader */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-card {
+            border-radius: 1.25rem;
+            padding: 1.25rem 1.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 0.85rem;
+            background: linear-gradient(135deg, #0f766e, #14b8a6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            box-shadow: 0 10px 20px rgba(20, 184, 166, 0.35);
+        }
+
+        .status-chip {
+            border-radius: 999px;
+            border: 1px solid rgba(15, 118, 110, 0.2);
+            padding: 0.35rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #0f766e;
+            background-color: rgba(15, 118, 110, 0.07);
+        }
+
+        .primary-ghost-btn {
+            border-radius: 0.9rem;
+            border: 1px solid rgba(15, 118, 110, 0.25);
+            padding: 0.55rem 1.2rem;
+            font-weight: 600;
+            color: #0f766e;
+            transition: all 0.2s ease;
+        }
+
+        .primary-ghost-btn:hover {
+            border-color: #0f766e;
+            background-color: rgba(15, 118, 110, 0.08);
+        }
+
+        .hero-surface {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.98), rgba(230, 250, 247, 0.85));
+            padding: 2rem;
+            border-radius: 1.75rem;
+            border: 1px solid rgba(15, 118, 110, 0.08);
+            box-shadow: 0 30px 70px rgba(15, 23, 42, 0.08);
+        }
+
+        .hero-surface::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.12), transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-badge {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: #475569;
+        }
+
+        .hero-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .hero-stat {
+            padding: 1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            background-color: rgba(248, 250, 252, 0.85);
+        }
+
+        .hero-stat p {
+            margin: 0;
+        }
+
+        .hero-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #94a3b8;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+        }
+
+        .hero-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .insight-panel {
+            position: relative;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            background-color: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .insight-tile {
+            border-radius: 1.2rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            padding: 1.25rem;
+            background-color: rgba(248, 250, 252, 0.85);
+        }
+
+        .insight-label {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .insight-subtext {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-top: 0.35rem;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background-color: rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 0.6rem;
+        }
+
+        .progress-track span {
+            display: block;
+            height: 100%;
+            width: 0%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #22d3ee, #0f766e);
+            transition: width 0.6s ease;
+        }
+
+        .accent-pill {
+            border-radius: 999px;
+            padding: 0.4rem 1rem;
+            border: 1px solid rgba(15, 118, 110, 0.2);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #0f766e;
+            background-color: rgba(15, 118, 110, 0.08);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-8 relative">
+        <nav class="card nav-card">
+            <div class="flex items-center gap-4">
+                <div class="nav-icon">AI</div>
+                <div>
+                    <p class="text-xs font-semibold tracking-[0.4em] uppercase text-slate-400">Adaptive Performance Lab
+                    </p>
+                    <p class="text-lg font-semibold text-slate-900">Executive Fitness Intelligence Hub</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="status-chip">Uptime 99.9%</span>
+                <span class="status-chip">AES-256 Secured</span>
+                <button type="button" class="primary-ghost-btn">Export Snapshot</button>
+            </div>
+        </nav>
+
+        <header class="hero-surface">
+            <div class="hero-content">
+                <div class="hero-badges">
+                    <span class="hero-badge">Client Operations</span>
+                    <span class="hero-badge">Predictive Pipeline</span>
+                </div>
+                <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4">
+                    <span class="gradient-bg bg-clip-text text-transparent">AI FITNESS ANALYST</span>
+                </h1>
+                <p class="text-base text-slate-600 max-w-3xl">
+                    Precision dashboard for high-touch coaching teams. Align biometric intel, adaptive routines, and
+                    predictive adherence modeling inside one deploy-ready surface.
+                </p>
+                <p id="auth-status" class="text-xs uppercase tracking-[0.35em] text-slate-400 mt-5">Professional Goal
+                    Setting Interface</p>
+
+                <div class="hero-stat-grid mt-6">
+                    <div class="hero-stat">
+                        <p class="hero-label">Active Client</p>
+                        <p class="hero-value" id="client-name-display">Pending Intake</p>
+                    </div>
+                    <div class="hero-stat">
+                        <p class="hero-label">Primary Goal</p>
+                        <p class="hero-value" id="goal-display">--</p>
+                    </div>
+                    <div class="hero-stat">
+                        <p class="hero-label">BMI Sync</p>
+                        <p class="hero-value" id="snapshot-bmi">--</p>
+                    </div>
+                    <div class="hero-stat">
+                        <p class="hero-label">Activity Rhythm</p>
+                        <p class="hero-value" id="activity-display">--</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input Card -->
+            <div id="input-card" class="card p-6 sm:p-8">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b border-gray-200 pb-3">Client Profile &
+                    Parameters</h2>
+                <form id="workout-form" class="space-y-6">
+                    <!-- Personal Info -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label for="name" class="block text-sm font-medium text-slate-600 mb-1">Full Name</label>
+                            <input type="text" id="name" placeholder="Enter Full Name" required
+                                class="input-field w-full">
+                        </div>
+                        <div>
+                            <label for="age" class="block text-sm font-medium text-slate-600 mb-1">Age (Years)</label>
+                            <input type="number" id="age" placeholder="Age" min="16" required
+                                class="input-field w-full">
+                        </div>
+                        <div>
+                            <label for="gender" class="block text-sm font-medium text-slate-600 mb-1">Gender</label>
+                            <select id="gender" required class="input-field w-full">
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Physical Metrics -->
+                    <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-6">
+                        <div>
+                            <label for="height" class="block text-sm font-medium text-slate-600 mb-1">Height
+                                (cm)</label>
+                            <input type="number" id="height" placeholder="Height (cm)" min="100" required
+                                class="input-field w-full" oninput="calculateBMI()">
+                        </div>
+                        <div>
+                            <label for="currentWeight" class="block text-sm font-medium text-slate-600 mb-1">Current
+                                Weight (kg)</label>
+                            <input type="number" id="currentWeight" placeholder="Current Wt (kg)" min="30" required
+                                class="input-field w-full" oninput="calculateBMI()">
+                        </div>
+                        <div>
+                            <label for="targetWeight" class="block text-sm font-medium text-slate-600 mb-1">Target
+                                Weight (kg)</label>
+                            <input type="number" id="targetWeight" placeholder="Target Wt (kg)" min="30" required
+                                class="input-field w-full">
+                        </div>
+                    </div>
+
+                    <div class="text-sm font-medium text-slate-600 pt-2">
+                        Calculated BMI: <span id="bmi-output" class="font-bold text-teal-600 text-base">--</span>
+                    </div>
+
+                    <!-- Goal & Activity -->
+                    <div class="grid grid-cols-2 gap-4 border-t border-gray-200 pt-6">
+                        <div>
+                            <label for="fitnessGoal" class="block text-sm font-medium text-slate-600 mb-1">Primary
+                                Fitness Goal</label>
+                            <select id="fitnessGoal" required class="input-field w-full">
+                                <option value="" disabled selected>Select Goal</option>
+                                <option value="Weight Loss">Weight Loss</option>
+                                <option value="Muscle Gain">Muscle Gain</option>
+                                <option value="Strength">Strength Development</option>
+                                <option value="Endurance">Cardiovascular Endurance</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="activityLevel" class="block text-sm font-medium text-slate-600 mb-1">Current
+                                Activity Level</label>
+                            <select id="activityLevel" required class="input-field w-full">
+                                <option value="" disabled selected>Select Level</option>
+                                <option value="Sedentary (little to no exercise)">Sedentary</option>
+                                <option value="Moderate (3-5 days/week)">Moderate</option>
+                                <option value="Active (6-7 days/week)">Active</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Equipment Checklist - Pill Selectors -->
+                    <div class="pt-2">
+                        <label
+                            class="block text-sm font-medium text-slate-600 mb-3 border-t border-gray-200 pt-6">Available
+                            Equipment Resources</label>
+                        <div id="equipment-list" class="flex flex-wrap gap-2">
+                            <!-- Cable -->
+                            <input type="checkbox" id="eq-cable" name="equipment" value="Cable"
+                                class="equipment-input hidden">
+                            <label for="eq-cable" class="equipment-label">Cable</label>
+
+                            <!-- Pin Loaded -->
+                            <input type="checkbox" id="eq-pin" name="equipment" value="Pin Loaded"
+                                class="equipment-input hidden">
+                            <label for="eq-pin" class="equipment-label">Pin Loaded</label>
+
+                            <!-- Free Weights -->
+                            <input type="checkbox" id="eq-free" name="equipment"
+                                value="Free Weights (Dumbbells/Barbells)" class="equipment-input hidden">
+                            <label for="eq-free" class="equipment-label">Free Weights</label>
+
+                            <!-- Body Weight -->
+                            <input type="checkbox" id="eq-body" name="equipment" value="Body Weight"
+                                class="equipment-input hidden">
+                            <label for="eq-body" class="equipment-label">Body Weight</label>
+
+                            <!-- Cardio -->
+                            <input type="checkbox" id="eq-cardio" name="equipment" value="Cardio Machines"
+                                class="equipment-input hidden">
+                            <label for="eq-cardio" class="equipment-label">Cardio Machines</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="generate-btn"
+                        class="w-full py-3 mt-6 text-white font-bold rounded-xl gradient-bg hover:opacity-90 transition duration-300 flex items-center justify-center shadow-xl">
+                        <span id="btn-text">ANALYZE AND GENERATE PLAN</span>
+                        <div id="loader" class="loader hidden ml-3"></div>
+                    </button>
+                    <p id="error-message" class="text-red-500 text-sm mt-2 hidden"></p>
+                </form>
+            </div>
+
+            <!-- Output Card -->
+            <div id="output-card" class="card p-6 sm:p-8 space-y-8 hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b border-gray-200 pb-3">Recommendation &
+                    Predictive Report</h2>
+
+                <!-- Predictive Analysis - Enhanced Metric Card -->
+                <div class="p-6 rounded-xl bg-teal-50 border border-teal-300 shadow-lg shadow-teal-100/50">
+                    <h3 class="text-lg font-bold text-teal-700 flex items-center mb-3 uppercase tracking-wider">
+                        <!-- Chart Icon for Analysis -->
+                        <svg class="w-6 h-6 mr-3 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                        </svg>
+                        Projected Goal Achievement
+                    </h3>
+                    <p id="prediction-output" class="text-3xl font-extrabold text-gray-900 italic"></p>
+                    <p class="text-xs text-slate-600 mt-2">This projection is based on a synthesis of initial BMI,
+                        stated fitness goal, and estimated compliance with the recommended intensity.</p>
+                </div>
+
+                <!-- Workout Plan -->
+                <div id="workout-plan-container" class="space-y-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 border-b border-gray-200 pb-2">Structured Daily
+                        Workout Routine</h3>
+                    <!-- Workout sections will be injected here -->
+                </div>
+            </div>
+        </main>
+
+        <section id="insight-panel" class="insight-panel space-y-6">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="hero-label">Systems Insight Layer</p>
+                    <h3 class="text-2xl font-semibold text-slate-900">Coach Intelligence Signals</h3>
+                    <p class="text-sm text-slate-500">Live readiness, trajectory and focus markers adjust as you capture
+                        client inputs.</p>
+                </div>
+                <span class="accent-pill" id="resources-display">Awaiting equipment selection</span>
+            </div>
+            <div class="insight-grid">
+                <div class="insight-tile">
+                    <p class="insight-label">Readiness Score</p>
+                    <div class="progress-track">
+                        <span id="readiness-progress"></span>
+                    </div>
+                    <p class="insight-value" id="readiness-score-value">--</p>
+                    <p class="insight-subtext" id="readiness-score-label">Awaiting intake</p>
+                </div>
+                <div class="insight-tile">
+                    <p class="insight-label">Weight Delta</p>
+                    <p class="insight-value text-3xl" id="weight-shift">--</p>
+                    <p class="insight-subtext" id="weight-direction">Awaiting target metrics</p>
+                </div>
+                <div class="insight-tile">
+                    <p class="insight-label">Strategy Focus</p>
+                    <p class="insight-value text-lg leading-snug" id="strategy-focus">Precision advisory notes populate
+                        after intake.</p>
+                    <p class="insight-subtext">Calibrated to stated goal + activity cadence.</p>
+                </div>
+            </div>
+        </section>
+
+
+    </div>
+
+    <!-- Message Modal (instead of alert) -->
+    <div id="message-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full border border-gray-200">
+            <h3 id="modal-title" class="text-xl font-bold mb-3 text-gray-800"></h3>
+            <p id="modal-content" class="text-slate-600 mb-4"></p>
+            <button onclick="document.getElementById('message-modal').classList.add('hidden')"
+                class="w-full py-2 gradient-bg text-white font-semibold rounded-lg hover:opacity-90 transition">Close
+                Report</button>
+        </div>
+    </div>
+
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let userId;
+
+        // API Key for Gemini API
+        const apiKey = "AIzaSyBgyqo7atlAO2JyMN68lVpNo8IgV06D-38"; // Canvas environment handles this
+
+        // --- Utility Functions ---
+
+        function showMessage(title, content) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerText = content;
+            document.getElementById('message-modal').classList.remove('hidden');
+        }
+
+        // --- Firebase Initialization and Auth ---
+
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase config is missing.");
+                showMessage("Setup Error", "Firebase configuration is not available. Persistence will not work.");
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Sign in using custom token or anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                document.getElementById('user-id-output').textContent = userId;
+                document.getElementById('auth-status').textContent = `Client ID: ${auth.currentUser.uid.substring(0, 8)}... | Session Status: ${auth.currentUser.isAnonymous ? 'Anonymous' : 'Authenticated'}`;
+
+                listenForLastPlan();
+            } catch (error) {
+                console.error("Firebase/Auth initialization failed:", error);
+                showMessage("Authentication Error", `Could not connect to the system. Error: ${error.message}`);
+            }
+        }
+
+        // --- Firestore Data Functions ---
+
+        function getPlanDocRef() {
+            if (!db || !userId) return null;
+            // Private path for user data: /artifacts/{appId}/users/{userId}/workout_plans/latest
+            return doc(db, `artifacts/${appId}/users/${userId}/workout_plans/latest`);
+        }
+
+        function listenForLastPlan() {
+            const planRef = getPlanDocRef();
+            if (!planRef) return;
+
+            // Listen for the last saved plan
+            onSnapshot(planRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.plan) {
+                        try {
+                            const parsedPlan = JSON.parse(data.plan);
+                            renderPlan(parsedPlan);
+                            document.getElementById('output-card').classList.remove('hidden');
+                            console.log("Last plan loaded from Firestore.");
+                        } catch (e) {
+                            console.error("Error parsing stored plan JSON:", e);
+                        }
+                    }
+                } else {
+                    console.log("No previous plan found in Firestore.");
+                }
+            }, (error) => {
+                console.error("Error listening to Firestore:", error);
+                document.getElementById('auth-status').textContent = `DB Error: ${error.code}`;
+            });
+        }
+
+        async function savePlanToFirestore(planData) {
+            const planRef = getPlanDocRef();
+            if (!planRef) return;
+
+            try {
+                // Store the entire plan object as a JSON string to ensure clean saving
+                await setDoc(planRef, {
+                    timestamp: new Date().toISOString(),
+                    user_id: userId,
+                    plan: JSON.stringify(planData)
+                });
+                console.log("Plan saved to Firestore successfully.");
+            } catch (e) {
+                console.error("Error saving plan to Firestore:", e);
+            }
+        }
+
+
+        // --- BMI Calculation ---
+
+        window.calculateBMI = function () {
+            const heightCm = parseFloat(document.getElementById('height').value);
+            const weightKg = parseFloat(document.getElementById('currentWeight').value);
+            const bmiOutput = document.getElementById('bmi-output');
+
+            if (heightCm > 0 && weightKg > 0) {
+                // BMI Formula: weight (kg) / [height (m)]^2
+                const heightM = heightCm / 100;
+                const bmi = weightKg / (heightM * heightM);
+                bmiOutput.textContent = bmi.toFixed(2);
+            } else {
+                bmiOutput.textContent = '--';
+            }
+
+            updateExecutiveSnapshot(getCurrentFormSnapshot());
+        }
+
+
+        // --- UI Rendering (Updated for Professional White Mode) ---
+
+        function renderPlan(data) {
+            const planContainer = document.getElementById('workout-plan-container');
+            planContainer.innerHTML = '<h3 class="text-xl font-bold text-gray-800 mb-3 border-b border-gray-200 pb-2">Structured Daily Workout Routine</h3>';
+
+            // 1. Render Workout Plan
+            data.workout_plan.forEach(section => {
+                let sectionHtml = `
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h4 class="text-base font-bold text-teal-600 mb-3 border-b border-gray-300 pb-2">${section.section.toUpperCase()}</h4>
+                        <ul class="list-none space-y-3 text-sm text-gray-600">
+                `;
+                section.items.forEach(item => {
+                    sectionHtml += `
+                        <li class="flex items-start">
+                            <!-- Bullet Point Icon -->
+                            <svg class="w-4 h-4 mt-1 mr-2 text-teal-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            <span class="flex-grow">
+                                <span class="font-bold text-gray-800">${item.exercise}:</span> <span class="text-slate-600">${item.details}</span>
+                            </span>
+                        </li>
+                    `;
+                });
+                sectionHtml += `</ul></div>`;
+                planContainer.innerHTML += sectionHtml;
+            });
+
+            // 2. Render Prediction
+            document.getElementById('prediction-output').textContent = data.prediction;
+        }
+
+        function getCurrentFormSnapshot() {
+            const selectedEquipment = Array.from(document.querySelectorAll('input[name="equipment"]:checked'))
+                .map(cb => cb.value)
+                .join(', ');
+
+            return {
+                name: document.getElementById('name').value,
+                fitnessGoal: document.getElementById('fitnessGoal').value,
+                bmi: document.getElementById('bmi-output').textContent,
+                activityLevel: document.getElementById('activityLevel').value,
+                equipment: selectedEquipment,
+                currentWeight: document.getElementById('currentWeight').value,
+                targetWeight: document.getElementById('targetWeight').value
+            };
+        }
+
+        function updateExecutiveSnapshot(snapshot) {
+            if (!snapshot) return;
+            const { name, fitnessGoal, bmi, activityLevel, equipment, currentWeight, targetWeight } = snapshot;
+
+            const setText = (id, value, fallback = '--') => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value && value !== '' && value !== '--' ? value : fallback;
+            };
+
+            setText('client-name-display', name, 'Pending Intake');
+            setText('goal-display', fitnessGoal);
+            setText('snapshot-bmi', bmi);
+            setText('activity-display', activityLevel);
+            setText('resources-display', equipment, 'Minimal / None Declared');
+
+            const readinessScore = deriveReadinessScore(bmi, activityLevel);
+            setText('readiness-score-value', `${readinessScore}%`);
+
+            const readinessBar = document.getElementById('readiness-progress');
+            if (readinessBar) {
+                readinessBar.style.width = `${readinessScore}%`;
+            }
+
+            const readinessLabel = document.getElementById('readiness-score-label');
+            if (readinessLabel) {
+                if (readinessScore >= 80) {
+                    readinessLabel.textContent = 'Prime readiness window';
+                } else if (readinessScore >= 60) {
+                    readinessLabel.textContent = 'Structured build-up recommended';
+                } else {
+                    readinessLabel.textContent = 'Progressive onboarding required';
+                }
+            }
+
+            const { deltaText, directionText } = computeWeightDelta(currentWeight, targetWeight);
+            setText('weight-shift', deltaText);
+            setText('weight-direction', directionText, 'Awaiting target metrics');
+
+            const strategyFocus = deriveStrategyFocus(fitnessGoal, activityLevel);
+            setText('strategy-focus', strategyFocus, 'Precision advisory notes populate after intake.');
+        }
+
+        function deriveReadinessScore(bmi, activityLevel) {
+            let score = 57;
+            if (activityLevel) {
+                if (activityLevel.includes('Active')) score += 20;
+                else if (activityLevel.includes('Moderate')) score += 12;
+                else score += 4;
+            }
+
+            const bmiValue = parseFloat(bmi);
+            if (!isNaN(bmiValue)) {
+                if (bmiValue >= 18.5 && bmiValue <= 27) score += 8;
+                else score -= 6;
+            }
+
+            return Math.max(35, Math.min(95, Math.round(score)));
+        }
+
+        function computeWeightDelta(currentWeight, targetWeight) {
+            const current = parseFloat(currentWeight);
+            const target = parseFloat(targetWeight);
+            if (isNaN(current) || isNaN(target)) {
+                return { deltaText: '--', directionText: 'Awaiting target metrics' };
+            }
+
+            const delta = Math.abs(target - current);
+            let directionText = 'Precision maintenance';
+            if (target < current) directionText = 'Strategic reduction phase';
+            else if (target > current) directionText = 'Lean mass development phase';
+
+            return { deltaText: `${delta.toFixed(1)} kg`, directionText };
+        }
+
+        function deriveStrategyFocus(goal, activityLevel) {
+            if (!goal) return 'Awaiting goal declaration to calibrate focus lanes.';
+
+            const cadence = activityLevel?.includes('Active')
+                ? 'High-frequency capacity blocks with compliance audits.'
+                : activityLevel?.includes('Moderate')
+                    ? 'Progressive overload microcycles with built-in recovery.'
+                    : 'Fundamental habit architecture + neuromuscular priming.';
+
+            const focusMap = {
+                'Weight Loss': 'Metabolic efficiency + caloric governance.',
+                'Muscle Gain': 'Hypertrophy density + nutrient timing control.',
+                'Strength': 'Progressive neural drive + max-effort safety nets.',
+                'Endurance': 'Aerobic economy + cadence durability.'
+            };
+
+            const thematic = focusMap[goal] || 'Holistic conditioning blocks.';
+            return `${thematic} ${cadence}`;
+        }
+
+        // --- Gemini API Call ---
+
+        async function generateRecommendation(event) {
+            event.preventDefault();
+
+            const generateBtn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById('error-message');
+            const outputCard = document.getElementById('output-card');
+
+            // Collect Data
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const height = document.getElementById('height').value;
+            const currentWeight = document.getElementById('currentWeight').value;
+            const targetWeight = document.getElementById('targetWeight').value;
+            const bmi = document.getElementById('bmi-output').textContent;
+            const fitnessGoal = document.getElementById('fitnessGoal').value;
+            const activityLevel = document.getElementById('activityLevel').value;
+
+            const selectedEquipment = Array.from(document.querySelectorAll('input[name="equipment"]:checked'))
+                .map(cb => cb.value)
+                .join(', ');
+
+            if (bmi === '--' || !name || !age || !gender || !fitnessGoal || !activityLevel) {
+                showMessage("Input Required", "Please ensure all mandatory client profile fields and physical metrics are accurately completed.");
+                return;
+            }
+
+            updateExecutiveSnapshot({
+                name,
+                fitnessGoal,
+                bmi,
+                activityLevel,
+                equipment: selectedEquipment || 'Minimal / None Declared',
+                currentWeight,
+                targetWeight
+            });
+
+            const userQuery = `
+                Act as a professional fitness and nutrition consultant for a high-end service. Your task is to generate a personalized workout plan and a rigorous predictive analysis for the client.
+                CLIENT PROFILE:
+                - Name: ${name}
+                - Age: ${age}
+                - Gender: ${gender}
+                - Height: ${height} cm
+                - Current Weight: ${currentWeight} kg
+                - Target Weight: ${targetWeight} kg
+                - BMI: ${bmi}
+                - Fitness Goal: ${fitnessGoal}
+                - Activity Level: ${activityLevel}
+                - Available Equipment: ${selectedEquipment || 'Minimal/None'}
+
+                Based on this comprehensive data, provide a structured JSON response. Ensure the recommended exercises are appropriate for the available equipment. The predictive analysis must be a single, realistic, and formally worded sentence, referencing the expected adherence and intensity.
+            `;
+
+            // UI State: Loading
+            errorMessage.classList.add('hidden');
+            generateBtn.disabled = true;
+            btnText.textContent = 'EXECUTING ANALYSIS...';
+            loader.classList.remove('hidden');
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const systemPrompt = "You are an expert fitness consultant. Generate a structured daily workout routine and a realistic, formal goal prediction based on the client's input. The response must be valid JSON matching the provided schema.";
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            workout_plan: {
+                                type: "ARRAY",
+                                description: "The daily workout broken down by sections.",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        section: { type: "STRING", description: "e.g., Warm-up, Strength, Cardio, Cooldown" },
+                                        items: {
+                                            type: "ARRAY",
+                                            items: {
+                                                type: "OBJECT",
+                                                properties: {
+                                                    exercise: { type: "STRING" },
+                                                    details: { type: "STRING", description: "e.g., 3 sets x 12 reps, or 5 minutes" }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    propertyOrdering: ["section", "items"]
+                                }
+                            },
+                            prediction: {
+                                type: "STRING",
+                                description: "A single, professional sentence predicting the time to achieve the goal."
+                            }
+                        },
+                        propertyOrdering: ["workout_plan", "prediction"]
+                    }
+                }
+            };
+
+            let success = false;
+            let retries = 0;
+            const maxRetries = 3;
+
+            while (retries < maxRetries && !success) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+
+                        const jsonText = result.candidates[0].content.parts[0].text;
+                        const data = JSON.parse(jsonText);
+
+                        renderPlan(data);
+                        outputCard.classList.remove('hidden');
+                        await savePlanToFirestore(data); // Save to Firestore
+                        success = true; // Mark as successful
+
+                    } else {
+                        throw new Error("API response was empty or malformed.");
+                    }
+                } catch (error) {
+                    console.error("API Call or Processing Error:", error);
+                    retries++;
+                    if (retries < maxRetries) {
+                        const delay = Math.pow(2, retries) * 1000;
+                        console.log(`Retrying in ${delay / 1000}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        errorMessage.textContent = `Execution failed after ${maxRetries} attempts. Please verify input data and try again.`;
+                        errorMessage.classList.remove('hidden');
+                        showMessage("Analysis Failure", "The system could not generate the structured report. Please check the console for error details.");
+                    }
+                }
+            }
+
+            // UI State: Reset
+            generateBtn.disabled = false;
+            btnText.textContent = 'ANALYZE AND GENERATE PLAN';
+            loader.classList.add('hidden');
+        }
+
+        // Add event listener after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase();
+            document.getElementById('workout-form').addEventListener('submit', generateRecommendation);
+            updateExecutiveSnapshot(getCurrentFormSnapshot());
+            document.querySelectorAll('#workout-form input, #workout-form select').forEach(element => {
+                const eventType = element.type === 'checkbox' ? 'change' : (element.tagName === 'SELECT' ? 'change' : 'input');
+                element.addEventListener(eventType, () => updateExecutiveSnapshot(getCurrentFormSnapshot()));
+            });
+        });
+    </script>
+</body>
+
+</html>
